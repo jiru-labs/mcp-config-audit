@@ -50,6 +50,17 @@ def credentials_config() -> Path:
 
 
 @pytest.fixture
+def suspicious_config() -> Path:
+    """A config with one server per suspicious-pattern heuristic, plus a clean one.
+
+    The clean server is the point of the fixture as much as the other four: it
+    uses a package runner, a scoped and pinned package and an HTTPS URL, and no
+    heuristic may fire on it.
+    """
+    return FIXTURES_DIR / "suspicious_config.json"
+
+
+@pytest.fixture
 def sample_secrets(sample_config: Path) -> list[str]:
     """Every credential value in the sample config.
 
