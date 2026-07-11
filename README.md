@@ -17,11 +17,8 @@ It is built for individual developers and small teams who don't have enterprise 
 ## Install
 
 ```bash
-pipx install git+https://github.com/jiru-labs/mcp-config-audit
+pipx install mcp-config-audit
 ```
-
-There is no PyPI release yet, so install from source for now. Once `0.1.0` is
-published, `pipx install mcp-config-audit` is all it takes.
 
 ## Usage
 
