@@ -395,3 +395,25 @@ def test_scan_never_prints_a_credential(
     assert sample_secrets  # the fixture must actually carry secrets to test
     for secret in sample_secrets:
         assert secret not in result.stdout
+
+
+def test_scan_reports_hardcoded_credentials_without_printing_them(
+    credentials_config: Path, credentials_secrets: list[str]
+) -> None:
+    """The shipped rules, end to end: a real config in, a real report out."""
+    result = runner.invoke(app, ["scan", "--config", str(credentials_config)])
+
+    assert result.exit_code == 0
+
+    # The credential on the command line outranks the one in the config file.
+    assert result.stdout.index("CRITICAL") < result.stdout.index("WARN")
+    assert "static-credential-in-args" in result.stdout
+    assert "static-credential-in-env" in result.stdout
+    # Named, so the user knows which variable to move out of the file.
+    assert "EXAMPLE_API_KEY" in result.stdout
+    # The server that references its credential from the environment is clean.
+    assert "env-referenced" not in result.stdout
+
+    assert credentials_secrets  # the fixture must actually carry secrets to test
+    for secret in credentials_secrets:
+        assert secret not in result.stdout
