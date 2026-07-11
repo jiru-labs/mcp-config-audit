@@ -16,11 +16,27 @@ pipx install mcp-scan
 
 ## Usage
 
+List the MCP servers declared in the host configs found on your machine:
+
+```bash
+mcp-scan list
+```
+
+Environment variables are listed by name only — `mcp-scan` never reads, prints or stores their values.
+
+To inspect one config file instead of discovering the installed hosts:
+
+```bash
+mcp-scan list --config path/to/claude_desktop_config.json
+```
+
+Print the version:
+
 ```bash
 mcp-scan version
 ```
 
-More commands (`list`, `scan`) are on the way — see the [open issues](https://github.com/jiru-labs/mcp-scan/issues).
+The `scan` command is on the way — see the [open issues](https://github.com/jiru-labs/mcp-scan/issues).
 
 ## Development
 
