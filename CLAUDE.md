@@ -11,10 +11,13 @@ Philosophy: local-first, read-only by default, zero telemetry, clear and actiona
 ## Status and roadmap
 
 - Done: reading and listing configs (issues #1–#5), across every host scope
-  (issue #14); risk detection (issues #6–#9).
-- In progress: exportable report (issue #10), and exit-code hardening for CI
-  (issues #23, #27).
-- Next: see the open issues.
+  including local/project scopes (issues #14, #31); risk detection
+  (issues #6–#9); credential redaction (issues #16, #22); exportable
+  report (issue #10, #19); exit-code hardening for CI (issues #9, #23, #27).
+- All issues filed so far (#1–#31) are closed; no open issues or PRs as of
+  2026-07-11.
+- Next: see the open issues, or propose new ones per the project thesis
+  below (e.g. more MCP hosts, CI-friendly output formats).
 
 ## Tech stack
 
@@ -42,11 +45,13 @@ README.md
 pyproject.toml
 ```
 
-## MCP config paths to support (macOS first, then Linux/Windows)
+## MCP config paths supported
 
-- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Claude Code: `~/.claude.json` and per-project `.mcp.json`
-- Cursor: `~/.cursor/mcp.json`
+- Claude Desktop: macOS `~/Library/Application Support/Claude/claude_desktop_config.json`,
+  Linux `~/.config/Claude/claude_desktop_config.json`, Windows
+  `%APPDATA%/Claude/claude_desktop_config.json`.
+- Claude Code: global `~/.claude.json`, plus per-project `.mcp.json`.
+- Cursor: global `~/.cursor/mcp.json`, plus per-project `.cursor/mcp.json`.
 
 ## Working rules for Claude Code
 
