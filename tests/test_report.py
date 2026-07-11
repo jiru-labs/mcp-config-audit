@@ -523,6 +523,30 @@ class TestSarif:
         }
         assert len(fingerprints) == 2
 
+    def test_one_rule_firing_twice_on_one_server_stays_two_alerts(self) -> None:
+        """The same trap again, and the easier one to walk into.
+
+        `Rule.check` returns a list precisely because a rule may find two things
+        wrong with one server — two credential-bearing arguments on one command,
+        say. Those findings share a rule, a server and a file, so anything the
+        fingerprint is built from must include what actually tells them apart:
+        what each one says.
+        """
+        server = _server()
+        findings = [
+            _finding(server=server, message="argument 3 holds the value of '--api-key'"),
+            _finding(server=server, message="argument 5 holds the value of '--token'"),
+        ]
+
+        results = json.loads(report.to_sarif(Report(findings=findings)))["runs"][0][
+            "results"
+        ]
+
+        fingerprints = {
+            result["partialFingerprints"]["mcpScanFinding/v1"] for result in results
+        }
+        assert len(fingerprints) == 2
+
     def test_a_fingerprint_does_not_move_between_runs(self) -> None:
         """An alert tracked across commits is an alert the user can close."""
         finding = _finding()

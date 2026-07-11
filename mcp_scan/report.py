@@ -445,18 +445,36 @@ def _sarif_fingerprint(finding: Finding) -> str:
 
     GitHub matches an alert to the one it saw yesterday by fingerprint, and
     generates one itself when a result carries none — from the rule and the
-    location, which here is a whole file. Two servers in one config tripping one
-    rule would then be one alert, and the second finding would vanish on upload.
+    location, which here is a whole file with no line to it. Every finding in one
+    config would then be fingerprinted alike, collapse into a single alert, and
+    the rest would vanish on upload. A dropped finding is the one failure a
+    scanner may not have, so the fingerprint is ours to compute.
 
-    So the fingerprint is computed from what actually distinguishes two findings:
-    the rule, and the server it fired on — named, as everywhere else, by where it
-    was declared rather than by its name alone. Not from the message, which may
-    carry a line of a command and would change under any rewording of a rule.
-    None of the four inputs is a credential.
+    It is built from everything that tells two findings apart: the rule, the
+    server — named, as everywhere else, by where it was declared and not by its
+    name alone — and the message, which is what distinguishes one finding of a
+    rule from the next one it makes on the same server (`Rule.check` returns a
+    list because a command may carry two credentials, and each is its own alert).
+
+    Including the message costs a re-created alert whenever a rule is reworded.
+    That is the right way round: an alert that comes back after a rewrite is a
+    nuisance, and a finding that never arrives is a vulnerability nobody was told
+    about.
+
+    The file is identified the way the result's location is, rather than by its
+    absolute path — the fingerprint has to survive the move from the developer's
+    machine to a CI runner, whose checkout is somewhere else entirely. Nothing
+    hashed here is a credential; a message reaches us already redacted.
     """
     server = finding.server
     identity = "\0".join(
-        [finding.rule_id, server.host, server.name, str(_resolved(server.source))]
+        [
+            finding.rule_id,
+            server.host,
+            server.name,
+            _sarif_uri(server.source),
+            finding.message,
+        ]
     )
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
