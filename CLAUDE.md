@@ -2,7 +2,19 @@
 
 ## What this project is
 
-A security CLI that scans local MCP (Model Context Protocol) configurations and detects risks: unverified servers, exposed static credentials, excessive permissions, and tool poisoning patterns in tool descriptions.
+A security CLI that scans local MCP (Model Context Protocol) configurations and
+reports what the configuration itself gives away: static credentials written into
+it, servers reached over plaintext, launch commands that download and run remote
+code or resolve a package name anyone could claim, and servers granted a whole
+filesystem or an unrestricted shell.
+
+It reads the configuration, not the servers. A tool's *description* — where a
+tool-poisoning payload actually hides — is served by a running server, not
+written in the config file, so no rule reads one (issue #35: the project used to
+claim it did). What the rules flag are the conditions that let a payload be
+planted (a rewritable transport, a launch command whose code can change under
+you) and the permissions that decide what it could take. Reading descriptions for
+real needs an opt-in live mode; see the network-call policy below.
 
 Target user: individual developers and small teams using Claude Code, Claude Desktop, Cursor or other MCP hosts, who don't have enterprise security tooling.
 
@@ -75,10 +87,29 @@ pyproject.toml
 2. One issue = one commit (or a few atomic commits). Commit messages in English, format: `feat: ...`, `fix: ...`, `test: ...`, `docs: ...`
 3. All new code ships with tests in `tests/`. Run `pytest` before committing; never commit with failing tests.
 4. Don't add new dependencies unless the issue explicitly asks for them.
-5. The scanner NEVER modifies user files, NEVER makes network calls in scan mode, and NEVER logs credential values (it only reports that they exist and where).
+5. The scanner NEVER modifies user files and NEVER logs credential values (it only reports that they exist and where). The **default** scan makes no network call and starts no process — see the network-call policy below.
 6. Defensive error handling: malformed configs, non-existent paths or denied permissions must not crash — they're reported as warnings.
 7. Code, docstrings, docs, commits and issues in English (public project). When talking to the user, reply in the language they wrote in.
 8. If you find technical debt outside the scope of the issue, don't fix it: open a new issue with `gh issue create`.
+
+## Network-call policy (decided 2026-07-11)
+
+The default scan stays local-first: no network call, no process started, no
+telemetry. That is the promise the project rests on, and nothing may weaken it.
+
+An **explicit opt-in flag** may break it, because the user asked for it in so
+many words. Two are planned:
+
+- `--check-registry` — ask npm/PyPI whether a package still resolves, to catch a
+  name that was unpublished and re-registered by someone else (issue #36).
+- `--live` — launch each configured server, call `tools/list`, and run the tool
+  descriptions through injection-pattern heuristics. The real tool-poisoning
+  detection, and the reason the claim in issue #35 was narrowed rather than
+  dropped.
+
+Rules for anything that takes this door: off by default; a failed request or a
+server that will not start is a **warning**, never a finding (a flaky network
+must not turn CI red); and no credential ever leaves the machine.
 
 ## Useful commands
 
