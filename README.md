@@ -2,7 +2,9 @@
 
 Security scanner for local MCP (Model Context Protocol) configurations.
 
-`mcp-scan` reads the MCP config files on your machine — Claude Desktop, Claude Code, Cursor, VS Code, Windsurf — and reports security risks: unverified servers, exposed static credentials, overly broad permissions, and tool poisoning patterns in tool descriptions.
+`mcp-scan` reads the MCP config files on your machine — Claude Desktop, Claude Code, Cursor, VS Code, Windsurf — and reports what the configuration itself gives away: credentials written into it in plain text, servers reached in the clear, launch commands that download and run remote code or resolve a package name anyone could claim, and servers handed a whole filesystem or an unrestricted shell.
+
+It reads the configuration, not the servers. A tool's *description* — where a tool-poisoning payload actually hides, as an instruction to the agent that the user never sees — is served by the running server, not written in the config file, so no rule here reads one. What the rules flag instead are the conditions that let a payload be planted, and the permissions that decide how much it could take: a plaintext transport an attacker can rewrite descriptions over, a launch command whose code can change under you between one run and the next, and a server given far more of your machine than its job needs. That is a narrower claim than "detects tool poisoning", and it is the true one.
 
 It is built for individual developers and small teams who don't have enterprise security tooling.
 
@@ -135,15 +137,37 @@ A scan that did not complete says so in the SARIF too (`invocations[0].execution
 
 ### What it detects
 
+Nine rules, every one of them reading the server definition — the command, the arguments, the URL, the `env` keys — and nothing else.
+
+**Credentials written into the config**
+
 | Rule | Severity | What it flags |
 | --- | --- | --- |
 | `static-credential-in-args` | CRITICAL | A credential passed inline on a server's command line — `--api-key=sk-…`, `GITHUB_TOKEN=ghp_…`, `Authorization: Bearer …`. On top of sitting in the config file, it is visible in the process table to every other process running as you. |
 | `static-credential-in-url` | CRITICAL | A credential in a remote server's URL — `?api_key=sk-…`, or the `user:password@` before the host. On top of sitting in the config file, it travels: out in the request line, into the access log at the far end, and into wherever the URL gets pasted. |
 | `static-credential-in-env` | WARN | A credential hardcoded as the value of an `env` entry, e.g. `"GITHUB_TOKEN": "ghp_…"`. |
 
-The fix for both is to keep the value in your environment (or a secret manager) and have the config reference it — `"GITHUB_TOKEN": "${GITHUB_TOKEN}"`. A config that already does is not flagged.
+The fix for all three is to keep the value in your environment (or a secret manager) and have the config reference it — `"GITHUB_TOKEN": "${GITHUB_TOKEN}"`. A config that already does is not flagged.
 
 A finding tells you *where* the credential is — which variable, which argument — and never what it is. The value is not printed, stored or logged, by any command.
+
+**How the server is launched, and how it is reached**
+
+| Rule | Severity | What it flags |
+| --- | --- | --- |
+| `remote-code-execution` | CRITICAL | The launch command downloads code and runs it unseen (`curl … \| sh`). The server is then whatever the remote host served at that moment, which you never reviewed and cannot pin. |
+| `insecure-transport` | CRITICAL | The server is reached over plain `http://`. The traffic carries your credentials, and it carries the tool descriptions your agent acts on — so anyone on the network path can not only read it but rewrite it. A loopback address is the one fair exception, and is not flagged. |
+| `executable-in-temp-dir` | WARN | The binary or script being executed sits in a world-writable directory, where any other process can replace it between launches without the config changing a character. |
+| `unscoped-package` | WARN | The command resolves an unscoped, unpinned package from a registry at every launch (`npx some-server`). The name belongs to whoever currently claims it, and the code behind it is whatever was published most recently. |
+
+**What the server is given**
+
+| Rule | Severity | What it flags |
+| --- | --- | --- |
+| `broad-filesystem-access` | WARN | The server is pointed at a whole filesystem, a home directory or an entire disk. That scope is the scope an attacker gets: a home directory holds your SSH keys, your browser profile and your `.env` files. |
+| `unrestricted-shell-access` | WARN | The server runs whatever command the agent composes, with your privileges — so a prompt injection in anything the agent reads becomes code execution on your machine. |
+
+The last two are the ones that decide how much a *successful* attack costs you, which is why they fire on servers that are otherwise perfectly legitimate. They are a statement about blast radius, not an accusation.
 
 More rules are landing — see the [open issues](https://github.com/jiru-labs/mcp-scan/issues). Adding one is adding a file: drop a `Rule` subclass into `mcp_scan/rules/`, give it an `id`, a `title` and a `severity` of `INFO`, `WARN` or `CRITICAL`, and the engine picks it up.
 
