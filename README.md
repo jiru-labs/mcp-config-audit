@@ -20,6 +20,14 @@ It is built for individual developers and small teams who don't have enterprise 
 pipx install mcp-config-audit
 ```
 
+**PyPI is the only registry this is published to.** It is developed here and released to
+PyPI from a tagged commit in this repository, over a trusted publisher — there is no
+release path that does not pass through this repo. A package of this name on npm or any
+other registry is not ours, is not built from this source, and is not affiliated with this
+project. The same reasoning the `unscoped-package` rule applies to your MCP servers applies
+to this tool: a name in a registry belongs to whoever claimed it, which is not always who
+you think.
+
 ## Usage
 
 List the MCP servers declared in the host configs found on your machine, grouped by the host that declares them:
