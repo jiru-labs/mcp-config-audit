@@ -1,0 +1,14 @@
+# The workflows pin every action to a commit SHA, which is safe but frozen: a pinned SHA
+# never picks up an upstream fix on its own. This is what unfreezes it — an update arrives
+# as a PR you review, instead of arriving silently the next time a job runs.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly

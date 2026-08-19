@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "nyakojiru", email = "llorens.p@proton.me" }]
+authors = [{ name = "Jiru-Labs", email = "info@jirulabs.com" }]
 keywords = ["mcp", "security", "scanner", "audit", "claude", "cursor", "sarif"]
 classifiers = [
     "Development Status :: 3 - Alpha",

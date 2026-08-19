@@ -9,7 +9,7 @@ page says how to report one, and what counts as one.
 **Do not open a public issue.** Use GitHub's private vulnerability reporting —
 the **Report a vulnerability** button under this repository's
 [Security tab](https://github.com/jiru-labs/mcp-config-audit/security/advisories/new) —
-or email <llorens.p@proton.me>.
+or email <info@jirulabs.com>.
 
 Please include what you did, what happened, and what you expected instead. A
 config that reproduces it is the most useful thing you can send — **with the
